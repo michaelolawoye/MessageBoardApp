@@ -1,0 +1,7 @@
+#ifndef SDL_CONSTANTS_H
+#define SDL_CONSTANTS_H
+
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
+
+#endif
