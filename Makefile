@@ -1,4 +1,4 @@
-OBJS = src/main.c
+OBJS = src/main.cpp
 OUT = build/mb.exe
 LINKER_FLAGS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 COMPILER_FLAGS = -w

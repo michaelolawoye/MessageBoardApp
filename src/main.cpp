@@ -7,52 +7,28 @@ int main(int argc, char* argv[]) {
 
 	SDL_Window* window = NULL;
 	SDL_Surface* screenSurface = NULL;
-	SDL_Surface* img = NULL;
-	SDL_Surface* opt_img = NULL;
-	SDL_Rect screenRect;
-
-	screenRect.x = 0;
-	screenRect.y = 0;
-	screenRect.w = SCREEN_WIDTH;
-	screenRect.h = SCREEN_HEIGHT;
+	std::string screenText = "Text";
 
 	if (!init(&window, &screenSurface)) {
 		return 1;
 	}
 
-	screenSurface = SDL_GetWindowSurface(window);
+	SDL_Color textColor = {0, 0, 0, 0xFF};
 
-	printf("exec path: %s\n", SDL_GetBasePath());
-	
-	char path[] = "./assets/simplebmp.bmp";
-	img = SDL_LoadBMP(path);
-	if (img == NULL) {
-		printf("Couldn't load this image: %s . Error: %s.\n", path, SDL_GetError());
-		return 1;
-	}
-
-	opt_img = SDL_ConvertSurface(img, screenSurface->format, 0);
-	SDL_FreeSurface(img);
-
-	if (SDL_BlitScaled(opt_img, NULL, screenSurface, &screenRect) == -1) {
-		printf("Failed to blit image. Error: %s\n", SDL_GetError());
-		return 1;
-	}
-	SDL_UpdateWindowSurface(window);
-
+	SDL_StartTextInput();
 	SDL_Event e;
 	bool quit = false;
-	int colour = 0xFF;
+	bool textRefresh = false;
 
 	while (!quit) {
 		while (SDL_PollEvent(&e)) {
 			if (e.type == SDL_QUIT) 
 				quit = true;
 
-			if (e.type == SDL_KEYDOWN) {
+			 if (e.type == SDL_KEYDOWN) {
 
-				switch(e.key.keysym.sym) {
-
+				switch(e.key.keysym.sym)
+				{
 					case SDLK_UP:
 						printf("Pressed up\n");
 						break;
@@ -70,11 +46,20 @@ int main(int argc, char* argv[]) {
 						break;
 				}
 			}
+			else if (e.type == SDL_TEXTINPUT) {
+
+				if( !( SDL_GetModState() & KMOD_CTRL && ( e.text.text[ 0 ] == 'c' || e.text.text[ 0 ] == 'C' || e.text.text[ 0 ] == 'v' || e.text.text[ 0 ] == 'V' ))) {
+
+					screenText += e.text.text;	
+					std::cout << screenText << std::endl;	
+					textRefresh = true;
+
+				}
+			}
+			
 		}
 	}
 
-	SDL_FreeSurface(opt_img);
-	img = NULL;
 	close(window);
 
 	return 0;
