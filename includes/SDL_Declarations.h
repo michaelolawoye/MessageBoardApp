@@ -3,5 +3,6 @@
 
 bool init(SDL_Window**, SDL_Surface**);
 void close(SDL_Window*);
+SDL_Renderer* createRenderer(SDL_Window*, SDL_Color);
 
 #endif
