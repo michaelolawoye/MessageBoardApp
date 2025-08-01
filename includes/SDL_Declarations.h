@@ -1,0 +1,4 @@
+#ifndef SDL_DECLARATIONS_H
+#define SDL_DECLARATIONS_H
+
+#endif
