@@ -1,5 +1,5 @@
-#ifndef SDL_INCLUDES_H
-#define SDL_INCLUDES_H
+#ifndef SDL_INCLUDES_HPP
+#define SDL_INCLUDES_HPP
 
 #include <stdio.h>
 #include <iostream>

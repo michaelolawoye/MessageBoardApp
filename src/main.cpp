@@ -1,51 +1,34 @@
-#include "../includes/SDL_Includes.h"
-#include "../includes/SDL_Constants.h"
-#include "../includes/SDL_Declarations.h"
-
-class BoardMessage {
-
-	private:
-		SDL_Surface* cSurface{nullptr};
-
-		BoardMessage* prevMessage{nullptr};
-		BoardMessage* nextMessage{nullptr};
-
-		int cWidth, cHeight = 0;
-		std::string cMessage;
-		std::string cSenderName;
+#include "../includes/SDL_Includes.hpp"
+#include "../includes/SDL_Constants.hpp"
+#include "../includes/SDL_Class_Declarations.hpp"
+#include "../includes/SDL_Declarations.hpp"
 
 
-	public:
+BoardMessage::BoardMessage(std::string message, std::string sender):
+	cMessage(message), cSenderName(sender) {
+		SDL_Log("Message Surface: \"%s\" initialized.\n", cMessage.c_str());
+}
 
-		void destroySurface();
+BoardMessage::~BoardMessage() {
 
-		BoardMessage(std::string message, std::string sender):
-		cMessage(message), cSenderName(sender) {
-			SDL_Log("Message Surface: %s initialized.\n", cMessage.c_str());
-		}
+	destroySurface();
+	SDL_Log("Message Surface: \"%s\" destroyed\n", cMessage.c_str());
+}
 
-		~BoardMessage() {
-			destroySurface();
-			SDL_Log("Message Surface: %s destroyed\n", cMessage.c_str());
-		}
 
-		SDL_Surface* getSurface() { return cSurface; }
+SDL_Surface* BoardMessage::getSurface() { return cSurface; }
 
-		int getWidth() { return cWidth; }
-		int getHeight() { return cHeight; }
+int BoardMessage::getWidth() { return cWidth; }
+int BoardMessage::getHeight() { return cHeight; }
 
-		BoardMessage* getPrevMessage() { return prevMessage; }
-		BoardMessage* getNextMessage() { return nextMessage; }
-		void setPrevMessage(BoardMessage* m) { prevMessage = m; }
-		void setNextMessage(BoardMessage* m) { nextMessage = m; }
+BoardMessage* BoardMessage::getPrevMessage() { return prevMessage; }
+BoardMessage* BoardMessage::getNextMessage() { return nextMessage; }
+void BoardMessage::setPrevMessage(BoardMessage* m) { prevMessage = m; }
+void BoardMessage::setNextMessage(BoardMessage* m) { nextMessage = m; }
 
-		std::string getMessage() { return cMessage; }
-		std::string getSenderName() { return cSenderName; }
+std::string BoardMessage::getMessage() { return cMessage; }
+std::string BoardMessage::getSenderName() { return cSenderName; }
 
-		bool surfaceLoaded() { return cSurface!=nullptr; }
-
-		bool intializeSurface(TTF_Font* font);
-};
 
 bool BoardMessage::intializeSurface(TTF_Font* font) {
 
@@ -80,39 +63,6 @@ void BoardMessage::destroySurface() {
 }
 
 
-class Board {
-
-	private:
-		BoardMessage* cMessages{nullptr};
-		BoardMessage* currMessage{nullptr};
-		int cMessageCount = 0;
-		SDL_Texture* cTextures[MAX_MESSAGES];
-		SDL_Renderer* cRenderer{nullptr};
-		TTF_Font* cFont{nullptr};
-
-	public:
-		bool moveToNextMessage();
-		bool moveToPrevMessage();
-
-		void destroyTextures();
-
-		bool addMessage(BoardMessage* message);
-		bool createTextures();
-		bool renderTextures(SDL_FRect dstSizeRect);
-
-		int getMessageCount() { return cMessageCount; }
-
-		Board(SDL_Renderer* renderer, TTF_Font* font): cRenderer(renderer), cFont(font) {}
-
-		~Board() {
-			destroyTextures();
-		}
-
-
-		// ***TEMPORARY DEBUGGING FUNCTION***
-		bool listTexturesAndSurfaces();
-
-};
 
 bool Board::listTexturesAndSurfaces() {
 
@@ -133,6 +83,12 @@ bool Board::listTexturesAndSurfaces() {
 	SDL_Log("\n-----End of board Surfaces and Textures------\n\n");
 	return true;
 }
+
+Board::Board(SDL_Renderer* renderer, TTF_Font* font): cRenderer(renderer), cFont(font) {}
+
+Board::~Board() { destroyTextures(); }
+
+int Board::getMessageCount() { return cMessageCount; }
 
 bool Board::moveToNextMessage() {
 
@@ -325,6 +281,18 @@ int main(int argc, char* argv[]) {
 	return 0;
 }
 
+
+BoardMessage* newMessage() {
+
+	std::string message, devicename;
+
+	SDL_Log("Enter message you wish you add to the board:\n");
+	std::cin >> message;
+
+	devicename = getDeviceName();
+
+	return new BoardMessage(message, devicename);
+}
 
 bool init(SDL_Window*& window, SDL_Renderer*& renderer, SDL_Surface*& surface) {
 
