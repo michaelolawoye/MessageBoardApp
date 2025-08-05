@@ -1,7 +1,7 @@
 #include "../includes/SDL_Includes.hpp"
 #include "../includes/SDL_Constants.hpp"
 #include "../includes/SDL_Class_Declarations.hpp"
-#include "../includes/SDL_Declarations.hpp"
+#include "../includes/SDL_Function_Declarations.hpp"
 
 
 BoardMessage::BoardMessage(std::string message, std::string sender):
@@ -267,6 +267,9 @@ int main(int argc, char* argv[]) {
 					quit = true;
 					break;
 
+				case SDL_EVENT_TEXT_INPUT:
+					handleTextInput(mWindow, &(e.text));
+
 			}
 		}
 
@@ -279,6 +282,13 @@ int main(int argc, char* argv[]) {
 	close(mWindow, mRenderer, mSurface);
 
 	return 0;
+}
+
+
+bool handleTextInput(SDL_Window* window, SDL_TextInputEvent* event) {
+
+	SDL_Log("%s\n", event->text);
+	return true;	
 }
 
 
@@ -316,6 +326,11 @@ bool init(SDL_Window*& window, SDL_Renderer*& renderer, SDL_Surface*& surface) {
 		return false;
 	}
 
+	if (!SDL_StartTextInput(window)) {
+		SDL_Log("Couldn't start text input. SDL_Error: %s\n", SDL_GetError());
+		return false;
+	}
+
 	return true;
 }
 
@@ -330,6 +345,7 @@ void close(SDL_Window*& window, SDL_Renderer*& renderer, SDL_Surface*& surface) 
 	SDL_DestroyWindow(window);
 	window = nullptr;
 
+	SDL_StopTextInput(window);
 	TTF_Quit();
 	SDL_Quit();	
 }
