@@ -12,7 +12,7 @@ BoardMessage::BoardMessage(std::string message, std::string sender):
 BoardMessage::~BoardMessage() {
 
 	destroySurface();
-	SDL_Log("Message Surface: \"%s\" destroyed\n", cMessage.c_str());
+	SDL_Log("Message class instance: \"%s\" destroyed\n", cMessage.c_str());
 }
 
 
@@ -29,16 +29,13 @@ void BoardMessage::setNextMessage(BoardMessage* m) { nextMessage = m; }
 std::string BoardMessage::getMessage() { return cMessage; }
 std::string BoardMessage::getSenderName() { return cSenderName; }
 
+void BoardMessage::changeMessage(std::string newMessage) { cMessage = newMessage; }
+
 
 bool BoardMessage::intializeSurface(TTF_Font* font) {
 
-	if (cSurface) {
-		SDL_Log("Surface already initialized!.");
-		return false;
-	}
-
 	SDL_Color color = {0, 0, 0, 0};
-	if (cSurface = TTF_RenderText_Blended_Wrapped(font, getMessage().c_str(), 0, color, 700); cSurface == nullptr) {
+	if (cSurface = TTF_RenderText_Blended_Wrapped(font, getMessage().c_str(), 0, color, TEXT_WRAP_WIDTH); cSurface == nullptr) {
 		SDL_Log("Couldn't initialize surface. SDL_Error: %s\n", SDL_GetError());
 		return false;
 	}
@@ -52,7 +49,7 @@ bool BoardMessage::intializeSurface(TTF_Font* font) {
 void BoardMessage::destroySurface() {
 
 	if (!cSurface) {
-		SDL_Log("Surface: %s is not initialized\n", cMessage.c_str());
+		SDL_Log("Surface: %s cannot be destroyed because it is not initialized\n", cMessage.c_str());
 		return;
 	}
 
@@ -61,7 +58,6 @@ void BoardMessage::destroySurface() {
 	cWidth = 0;
 	cHeight = 0;
 }
-
 
 
 bool Board::listTexturesAndSurfaces() {
@@ -80,13 +76,19 @@ bool Board::listTexturesAndSurfaces() {
 		i++;
 	}
 
-	SDL_Log("\n-----End of board Surfaces and Textures------\n\n");
+	SDL_Log("\n-----End of Board Surfaces and Textures------\n\n");
+
+	currMessage = cMessages;
 	return true;
 }
 
-Board::Board(SDL_Renderer* renderer, TTF_Font* font): cRenderer(renderer), cFont(font) {}
+Board::Board(SDL_Renderer* renderer, TTF_Font* font): cRenderer(renderer), cFont(font) {
+	SDL_zero(cTextures);
+}
 
-Board::~Board() { destroyTextures(); }
+Board::~Board() {
+	destroyTextures();
+}
 
 int Board::getMessageCount() { return cMessageCount; }
 
@@ -96,7 +98,6 @@ bool Board::moveToNextMessage() {
 		SDL_Log("No messages on board, can't move to next message.\n");
 		return false;
 	}
-
 	if (!currMessage->getNextMessage()) {
 		return false;
 	}
@@ -139,6 +140,7 @@ bool Board::addMessage(BoardMessage* message) {
 
 	if (cMessageCount >= MAX_MESSAGES) {
 		SDL_Log("Can't add more messages, max message size reached.\n");
+		return false;
 	}
 
 	if (!cMessages) {
@@ -181,6 +183,7 @@ bool Board::createTextures() {
 		}
 	}
 
+	currMessage = cMessages;
 	return true;
 }
 
@@ -209,6 +212,23 @@ bool Board::renderTextures(SDL_FRect dstSizeRect) {
 	SDL_RenderPresent(cRenderer);
 	return true;
 }
+
+bool Board::destroyMessages() {
+
+	currMessage = cMessages;
+	BoardMessage* nextMessage = currMessage->getNextMessage();
+	
+	while (nextMessage != nullptr) {
+		if (!currMessage) {
+			continue;
+		}
+		delete currMessage;
+		currMessage = nextMessage;
+		nextMessage = nextMessage->getNextMessage();
+	}
+	return true;
+}
+
 
 
 int main(int argc, char* argv[]) {
@@ -253,11 +273,14 @@ int main(int argc, char* argv[]) {
 	b.createTextures();
 	b.listTexturesAndSurfaces();
 
+
 	SDL_FRect dstRect{0, 0, SCREEN_WIDTH/3, SCREEN_HEIGHT/8};
 
 	bool quit = false;
+	bool new_render = true;
 	SDL_Event e;
 	SDL_zero(e);
+	std::string potentialMessage{""};
 
 	while (!quit) {
 		while (SDL_PollEvent(&e)) {
@@ -267,10 +290,31 @@ int main(int argc, char* argv[]) {
 					quit = true;
 					break;
 
+
+				case SDL_EVENT_KEY_DOWN:
+					if (handleKeyDown(mWindow, &(e.key), potentialMessage)) {
+
+						BoardMessage* bm = new BoardMessage(potentialMessage, getDeviceName());
+						b.addMessage(bm);
+						potentialMessage.erase();
+
+						new_render = true;
+					}
+					break;
+
 				case SDL_EVENT_TEXT_INPUT:
-					handleTextInput(mWindow, &(e.text));
+					handleTextInput(mWindow, &(e.text), potentialMessage);
+					break;
+
+				default:
+					break;
 
 			}
+		}
+
+		if (new_render) {
+			b.createTextures();
+			new_render = false;
 		}
 
 		SDL_SetRenderDrawColor(mRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -285,10 +329,35 @@ int main(int argc, char* argv[]) {
 }
 
 
-bool handleTextInput(SDL_Window* window, SDL_TextInputEvent* event) {
 
-	SDL_Log("%s\n", event->text);
-	return true;	
+bool handleKeyDown(SDL_Window* window, SDL_KeyboardEvent* event, std::string& potentialMessage) {
+
+	if (SDL_GetModState() & SDL_KMOD_CTRL && (event->key == SDLK_C)) {
+		SDL_Log("copy\n");
+		SDL_SetClipboardText(potentialMessage.c_str());
+
+	} else if (SDL_GetModState() & SDL_KMOD_CTRL && (event->key == SDLK_V)) {
+		SDL_Log("paste\n");
+		potentialMessage = static_cast<std::string>(SDL_GetClipboardText());
+
+	} else if (event->key == SDLK_BACKSPACE && potentialMessage.length() > 0) {
+		potentialMessage.pop_back();
+		SDL_Log("%s\n", potentialMessage.c_str());
+	}
+
+	if (event->key == SDLK_RETURN) {
+		SDL_Log("Enter pressed\n");
+		return true;
+	}
+	return false;
+}
+
+
+std::string handleTextInput(SDL_Window* window, SDL_TextInputEvent* event, std::string& potentialMessage) {
+
+	potentialMessage.append(event->text);
+	SDL_Log("%s\n", potentialMessage.c_str());
+	return event->text;	
 }
 
 
@@ -303,6 +372,7 @@ BoardMessage* newMessage() {
 
 	return new BoardMessage(message, devicename);
 }
+
 
 bool init(SDL_Window*& window, SDL_Renderer*& renderer, SDL_Surface*& surface) {
 

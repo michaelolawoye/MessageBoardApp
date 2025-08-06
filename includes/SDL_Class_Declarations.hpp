@@ -6,7 +6,7 @@ class BoardMessage {
 		BoardMessage* prevMessage{nullptr};
 		BoardMessage* nextMessage{nullptr};
 
-		int cWidth, cHeight = 0;
+		int cWidth = 0, cHeight = 0;
 		std::string cMessage;
 		std::string cSenderName;
 
@@ -32,6 +32,8 @@ class BoardMessage {
 		std::string getMessage();
 		std::string getSenderName();
 
+		void changeMessage(std::string newMessage);
+
 		bool intializeSurface(TTF_Font*);
 };
 
@@ -55,6 +57,8 @@ class Board {
 
 		bool addMessage(BoardMessage*);
 		bool renderTextures(SDL_FRect);
+
+		bool destroyMessages();
 
 		int getMessageCount();
 
