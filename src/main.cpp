@@ -1,7 +1,4 @@
-#include "../includes/SDL_Includes.hpp"
-#include "../includes/SDL_Constants.hpp"
-#include "../includes/SDL_Class_Declarations.hpp"
-#include "../includes/SDL_Function_Declarations.hpp"
+#include "../includes/Project_Includes.hpp"
 
 
 BoardMessage::BoardMessage(std::string message, std::string sender):
@@ -88,6 +85,7 @@ Board::Board(SDL_Renderer* renderer, TTF_Font* font): cRenderer(renderer), cFont
 
 Board::~Board() {
 	destroyTextures();
+	destroyMessages();
 }
 
 int Board::getMessageCount() { return cMessageCount; }
@@ -215,6 +213,9 @@ bool Board::renderTextures(SDL_FRect dstSizeRect) {
 
 bool Board::destroyMessages() {
 
+	if (!cMessages) {
+		return true;
+	}
 	currMessage = cMessages;
 	BoardMessage* nextMessage = currMessage->getNextMessage();
 	
@@ -226,6 +227,9 @@ bool Board::destroyMessages() {
 		currMessage = nextMessage;
 		nextMessage = nextMessage->getNextMessage();
 	}
+	delete currMessage;
+	currMessage = nullptr;
+
 	return true;
 }
 
@@ -249,27 +253,7 @@ int main(int argc, char* argv[]) {
 	}
 	
 	Board b{mRenderer, font};
-	BoardMessage bm1{"bm1Message", "my device1"};
-	BoardMessage bm2{"Hello my name is Michael, I'm making this program to get better at application programming", "my device2"};
-	BoardMessage bm3{"bm3Message", "my device3"};
-	BoardMessage bm4{"bm4Message", "my device4"};
-	BoardMessage bm5{"bm5Message", "my device5"};
-	BoardMessage bm6{"bm6Message", "my device6"};
-	BoardMessage bm7{"bm7Message", "my device7"};
-	BoardMessage bm8{"bm8Message", "my device8"};
-	BoardMessage bm9{"bm9Message", "my device9"};
-	BoardMessage bm10{"bm10Message", "my device10"};
 
-	b.addMessage(&bm1);
-	b.addMessage(&bm2);
-	b.addMessage(&bm3);
-	b.addMessage(&bm4);
-	b.addMessage(&bm5);
-	b.addMessage(&bm6);
-	b.addMessage(&bm7);
-	b.addMessage(&bm8);
-	b.addMessage(&bm9);
-	b.addMessage(&bm10);
 	b.createTextures();
 	b.listTexturesAndSurfaces();
 
@@ -329,26 +313,42 @@ int main(int argc, char* argv[]) {
 }
 
 
-
 bool handleKeyDown(SDL_Window* window, SDL_KeyboardEvent* event, std::string& potentialMessage) {
 
-	if (SDL_GetModState() & SDL_KMOD_CTRL && (event->key == SDLK_C)) {
-		SDL_Log("copy\n");
-		SDL_SetClipboardText(potentialMessage.c_str());
+	switch (event->key) {
+		case SDLK_C:
+			if (SDL_GetModState() & SDL_KMOD_CTRL) {
+				SDL_Log("copy\n");
+				SDL_SetClipboardText(potentialMessage.c_str());
+			}
+			break;
 
-	} else if (SDL_GetModState() & SDL_KMOD_CTRL && (event->key == SDLK_V)) {
-		SDL_Log("paste\n");
-		potentialMessage = static_cast<std::string>(SDL_GetClipboardText());
+		case SDLK_V:
+			if (SDL_GetModState() & SDL_KMOD_CTRL) {
+				SDL_Log("paste\n");
+				potentialMessage = static_cast<std::string>(SDL_GetClipboardText());
+			}
+			break;
 
-	} else if (event->key == SDLK_BACKSPACE && potentialMessage.length() > 0) {
-		potentialMessage.pop_back();
-		SDL_Log("%s\n", potentialMessage.c_str());
+		case SDLK_BACKSPACE:
+			if (potentialMessage.length() > 0) {
+				potentialMessage.pop_back();
+				SDL_Log("%s\n", potentialMessage.c_str());
+			}
+			break;
+
+		case SDLK_RETURN:
+			if (potentialMessage.length() > 0) {
+				SDL_Log("Enter pressed\n");
+				return true;
+			}
+			break;
+
+		default:
+			break;
+
 	}
 
-	if (event->key == SDLK_RETURN) {
-		SDL_Log("Enter pressed\n");
-		return true;
-	}
 	return false;
 }
 
