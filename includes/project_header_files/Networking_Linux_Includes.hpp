@@ -11,6 +11,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <poll.h>
 #include <fcntl.h>
 
 

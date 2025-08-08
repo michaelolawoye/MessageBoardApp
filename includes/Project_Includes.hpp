@@ -6,10 +6,6 @@
 #include "project_header_files/SDL_Class_Declarations.hpp"
 #include "project_header_files/SDL_Function_Declarations.hpp"
 
-#ifdef _WIN32 
-	#include "project_header_files/Networking_Windows_Includes.hpp"
-#else
-	#include "project_header_files/Networking_Linux_Includes.hpp"
-#endif
+#include "project_header_files/Networking_All_Includes.hpp"
 
 #endif

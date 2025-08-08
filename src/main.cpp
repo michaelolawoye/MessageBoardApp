@@ -189,7 +189,12 @@ bool Board::renderTextures(SDL_FRect dstSizeRect) {
 
 	float x = 0, y = 0;
 
+	int skipped_messages = (cMessageCount - MAX_RENDER_MESSAGES > 0) ? cMessageCount - MAX_RENDER_MESSAGES : 0;
 	for (auto& texture: cTextures) {
+		if (skipped_messages > 0) {
+			skipped_messages--;
+			continue;
+		}
 		if (!texture) {
 			continue;
 		}
