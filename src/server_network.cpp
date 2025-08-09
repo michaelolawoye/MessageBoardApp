@@ -1,22 +1,47 @@
 #include "../includes/Project_Includes.hpp"
 
-int createSocket(int);
+int createListenSocket(int);
+int createCommunicationSocket(int);
 
 int main(int argc, char* argv[]) {
 
-	int listenfd = createSocket(MY_PORT);
+	int listenfd = createListenSocket(MY_PORT);
 
 	if (listen(listenfd, 10) == -1) {
-		printf("listen failed\n");
+		printf("listen failed. Errno: %d\n", errno);
 		return 1;
 	}
-	printf("Socket: %d\n", listenfd);
+	printf("Listen Socket: %d\n", listenfd);
+
+
 
 	return 0;
 }
 
 
-int createSocket(int port) {
+int createCommunicationSocket(int listenfd) {
+
+	if (listen(listenfd, 10) == -1) {
+		printf("listen() failed. Errno: %d\n", errno);
+		return -1;
+	}
+
+	int newfd;
+	struct sockaddr* their_addr;
+	socklen_t* their_size;
+	*their_size = sizeof(struct sockaddr_storage);
+
+	if (newfd = accept(listenfd, static_cast<struct sockaddr*>(their_addr) , their_size); newfd == -1) {
+		printf("accept() failed. Errno: %d\n", errno);
+		return -1;
+	}
+
+	return newfd;
+
+}
+
+
+int createListenSocket(int port) {
 
 	struct addrinfo hints;
 	struct addrinfo *myaddrinfo, *currAddr;
@@ -40,12 +65,12 @@ int createSocket(int port) {
 	for  (currAddr = myaddrinfo; currAddr != nullptr; currAddr = currAddr->ai_next) {
 
 		if (listenfd = socket(currAddr->ai_family, currAddr->ai_socktype, currAddr->ai_protocol); listenfd == -1) {
-			printf("socket() failed. Trying next one...\n");
+			printf("socket() failed. Trying next one... Errno: %d\n", errno);
 			continue;
 		}
 
 		if (bind(listenfd, currAddr->ai_addr, currAddr->ai_addrlen) == -1) {
-			printf("bind() failed. Trying next one...\n");
+			printf("bind() failed. Trying next one... Errno: %d\n", errno);
 			continue;
 		}
 
