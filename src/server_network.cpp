@@ -1,10 +1,11 @@
 #include "../includes/Project_Includes.hpp"
 
 int createListenSocket(int);
+int findOtherSockets();
 int createCommunicationSocket(int);
 
 int main(int argc, char* argv[]) {
-
+	printf("hello");
 	int listenfd = createListenSocket(MY_PORT);
 
 	if (listen(listenfd, 10) == -1) {
@@ -13,6 +14,8 @@ int main(int argc, char* argv[]) {
 	}
 	printf("Listen Socket: %d\n", listenfd);
 
+
+	int newfd = createCommunicationSocket(listenfd);
 
 
 	return 0;
@@ -26,20 +29,25 @@ int createCommunicationSocket(int listenfd) {
 		return -1;
 	}
 
-	int newfd;
-	struct sockaddr* their_addr;
-	socklen_t* their_size;
-	*their_size = sizeof(struct sockaddr_storage);
-
-	if (newfd = accept(listenfd, static_cast<struct sockaddr*>(their_addr) , their_size); newfd == -1) {
+	int commfd = 0;
+	struct sockaddr their_addr;
+	socklen_t their_size = sizeof(struct sockaddr_storage);
+	
+	if (commfd = accept(listenfd, &their_addr, &their_size); commfd == -1) {
 		printf("accept() failed. Errno: %d\n", errno);
 		return -1;
 	}
 
-	return newfd;
+	return commfd;
 
 }
 
+int findOtherSockets(int commfd) {
+
+
+	
+	return 0;
+}
 
 int createListenSocket(int port) {
 
