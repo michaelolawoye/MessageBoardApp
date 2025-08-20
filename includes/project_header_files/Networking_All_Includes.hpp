@@ -9,6 +9,7 @@
 
 #define MY_PORT 5050
 #include  <stdlib.h>
+#include <signal.h>
 
 
 

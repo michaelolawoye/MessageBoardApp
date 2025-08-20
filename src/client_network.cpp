@@ -5,14 +5,15 @@ int sendMessage(int clientfd, std::string message);
 
 int main(int argc, char* argv[]) {
 
+	int sock;
 
-	int port = 0;
+	if (sock = createClientSocket("Ubuntu-24", MY_PORT); sock == -1) {
+		return -1;
+	}
 
-	int sock = createClientSocket("tcpbin.com", 4242);
 	printf("socket: %d\n", sock);
 
-	std::string m;
-	std::cin >> m;
+	std::string m = "hello from client\n";
 
 	sendMessage(sock, m);
 
@@ -27,13 +28,14 @@ int createClientSocket(std::string serverip, int port) {
 	int clientfd;
 
 	char ch_port[50];
+	char ipstr[INET6_ADDRSTRLEN];
+	
 	sprintf(ch_port, "%d", port);
 
 	bzero(&hints, sizeof(hints));
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
 
 	if (gai_error = getaddrinfo(serverip.c_str(), ch_port, &hints, &myaddrinfo); gai_error != 0) {
 		printf("getaddrinfo() failed. Error: %d\n", gai_error);
@@ -42,12 +44,12 @@ int createClientSocket(std::string serverip, int port) {
 
 	for (curr_addrinfo = myaddrinfo; curr_addrinfo !=  nullptr; curr_addrinfo = curr_addrinfo->ai_next) {
 
-		char ipstr[INET6_ADDRSTRLEN];
 
 		inet_ntop(curr_addrinfo->ai_family, get_inaddr(static_cast<struct sockaddr*>(curr_addrinfo->ai_addr)), ipstr, sizeof(ipstr));
 
 		if (clientfd = socket(curr_addrinfo->ai_family, curr_addrinfo->ai_socktype, curr_addrinfo->ai_protocol); clientfd == -1) {
 			printf("socket() failed for %s, trying next one. errno: %d\n", ipstr, errno);
+			close(clientfd);
 			continue;
 		}
 
@@ -55,20 +57,23 @@ int createClientSocket(std::string serverip, int port) {
 
 		if (connect(clientfd, curr_addrinfo->ai_addr, curr_addrinfo->ai_addrlen) == -1) {
 			printf("connect() failed for %s, trying next ip. errno: %d\n", ipstr, errno);
+			close(clientfd);
 			continue;
 		}
+
+		printf("Client connected socket %d to ip: %s\n", clientfd, ipstr);
 
 		break;
 	}
 
-	if (clientfd == -1) {
-		printf("Socket creation failed...\n");
+	if (curr_addrinfo == nullptr) {
+		printf("Socket connection failed...\n");
 		return -1;
 	}
 
 	printf("Socket successfully connected\n");
 
-
+	freeaddrinfo(curr_addrinfo);
 
 	return clientfd;
 }
@@ -87,6 +92,8 @@ int sendMessage(int clientfd, std::string message) {
 		curr_message = message.substr(bytes_sent, message_bytes-bytes_sent);
 
 		packet_bytes = send(clientfd, curr_message.c_str(), curr_message.length(), 0);
+		printf("Bytes sent: %d\n", packet_bytes);
+		fflush(stdout);
 
 		if (packet_bytes == -1) {
 			printf("Couldn't send  message. errno: %d\n", errno);
@@ -96,15 +103,7 @@ int sendMessage(int clientfd, std::string message) {
 		bytes_sent += packet_bytes;
 	}
 
-	char returnMessage[1024] = "nothing";
-	int bytes_recv = -100;
+	close(clientfd);
 
-	if ((bytes_recv = recv(clientfd, returnMessage, 1024, 0)) == -1) {
-		printf("recv() failed. errno: %d", errno);
-	}
-	printf("bytes recieved: %d\n", bytes_recv);
-	printf("returnMessage: %s\n", returnMessage);
-
-	printf("finished\n");
 	return 0;
 }
