@@ -72,3 +72,10 @@ class Board {
 
 };
 
+struct MessagePacket {
+
+	public:
+		std::string sMessage;
+		std::string sSender;
+		
+}

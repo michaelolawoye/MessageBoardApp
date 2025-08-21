@@ -1,7 +1,6 @@
 #include "../includes/Project_Includes.hpp"
 
 int createListenSocket(int);
-int findOtherSockets();
 int pollConnections();
 int createCommunicationSocket(int);
 
@@ -89,13 +88,6 @@ int createCommunicationSocket(int listenfd) {
 
 	return commfd;
 
-}
-
-int findOtherSockets(int commfd) {
-
-
-	
-	return 0;
 }
 
 int createListenSocket(int port) {

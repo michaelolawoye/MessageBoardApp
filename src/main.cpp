@@ -365,20 +365,6 @@ std::string handleTextInput(SDL_Window* window, SDL_TextInputEvent* event, std::
 	return event->text;	
 }
 
-
-BoardMessage* newMessage() {
-
-	std::string message, devicename;
-
-	SDL_Log("Enter message you wish you add to the board:\n");
-	std::cin >> message;
-
-	devicename = getDeviceName();
-
-	return new BoardMessage(message, devicename);
-}
-
-
 bool init(SDL_Window*& window, SDL_Renderer*& renderer, SDL_Surface*& surface) {
 
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
