@@ -4,8 +4,10 @@ int createListenSocket(int);
 int pollConnections();
 int createCommunicationSocket(int);
 
+#define debugprintf printf
 
 constexpr int SOCKET_COUNT{2};
+constexpr int MAXMSGSIZE{256};
 
 
 class Server{
@@ -14,21 +16,27 @@ class Server{
 		int clsListenfd;
 		int clsCommfd;
 		int clsPort;
-		fd_set* clsMasterClientfds;
+		fd_set* clsMasterClientfds; // master fd_set to keep track of all fds
+
+		// fd_sets for select() arguments
 		fd_set* clsClientRfds;
 		fd_set* clsClientWfds;
 		fd_set* clsClientEfds;
 
 		int clsMaxfd; // value for select()'s first argument
 
+		void* get_inaddr(struct sockaddr*);
+		int createListenSocket();
+		int handleNewConnection();
+		int deleteConnection(int clientfd);
+		int handleClientData(int clientfd);
+		int sendClientMessage(int clientfd);
+		int handleClientError(int clientfd);
+
 	public:
 		Server(int port);
 		~Server();
 
-		void* get_inaddr(struct sockaddr*);
-		int createListenSocket();
-		int handleNewConnection();
-		int handleClientData(int clientfd);
 		int pollConnections();
 };
 
@@ -51,6 +59,8 @@ Server::Server(int port): clsPort{port} {
 	FD_ZERO(clsClientRfds);
 	FD_ZERO(clsClientWfds);
 	FD_ZERO(clsClientEfds);
+
+	createListenSocket();
 }
 
 Server::~Server() {
@@ -118,6 +128,11 @@ int Server::createListenSocket() {
 	clsMaxfd = listenfd;
 	clsListenfd = listenfd;
 
+	if (listen(listenfd, 10) == -1) {
+		printf("Server::createListenSocket() listen failed. Errno: %d\n", errno);
+		exit(1);
+	}
+
 	return listenfd;
 }
 
@@ -135,25 +150,85 @@ int Server::handleNewConnection() {
 	char ipstr[INET6_ADDRSTRLEN];
 
 	inet_ntop(their_addr.ss_family, get_inaddr((struct sockaddr*)&their_addr), ipstr, INET6_ADDRSTRLEN);
-	printf("Accepted connction from %s\n", ipstr);
+	printf("Accepted connection from %s\n", ipstr);
 
 	FD_SET(newfd, clsMasterClientfds);
 
 	return newfd;
 }
 
+int Server::deleteConnection(int clientfd) {
+
+	return 0;
+}
+
 int Server::handleClientData(int clientfd) {
 
+	char recv_buffer[MAXMSGSIZE];
+	std::string fullmessage;
+
+	int bytes_recv = 0;
+	while (bytes_recv >= MAXMSGSIZE) {
+		if (bytes_recv = recv(clientfd, recv_buffer, MAXMSGSIZE, 0); bytes_recv == -1) {
+			printf("Server::handleClientData() recv() from client socket: %d failed. Errno: %d\n", clientfd, errno);
+			return -1;
+		}
+
+		if (bytes_recv == 0) { // client ended communication
+			deleteConnection(clientfd);
+			return 0;
+		}
+
+		fullmessage.append(recv_buffer);
+	}
+
+	printf("Message recieved from client socket %d: %s\n", clientfd, fullmessage.c_str());
+	return 1;
+}
+
+int Server::sendClientMessage(int clientfd) {
+
+	return 0;
+}
+
+int Server::handleClientError(int clientfd) {
+
+	return 0;
 }
 
 int Server::pollConnections() {
-
+	printf("polling...\n");
+	struct timeval tv;
+	tv.tv_sec = 7;
+	tv.tv_usec = 0;
 	clsClientRfds = clsMasterClientfds;
 	clsClientWfds = clsMasterClientfds;
 	clsClientEfds = clsMasterClientfds;
-	select(clsMaxfd, clsClientRfds, clsClientWfds, clsClientEfds, NULL);
+	select(clsMaxfd, clsClientRfds, clsClientWfds, clsClientEfds, &tv);
+	printf("polled\n");
+	fd_set* test = new fd_set;
+	FD_SET(0, test);
+	for (int i = 0; i < clsMaxfd; i++) {
 
-	
+		if (FD_ISSET(i, clsClientWfds)) {
+			printf("x\n");
+			if (i == clsListenfd) { // new client trying to connect
+				handleNewConnection();
+			}
+			else {
+				handleClientData(i);
+			}
+		}
+
+		if (FD_ISSET(i, clsClientRfds)) {
+			sendClientMessage(i);
+		}
+
+		if (FD_ISSET(i, clsClientEfds)) {
+			handleClientError(i);
+		}
+
+	}
 
 	return 0;
 }
@@ -161,52 +236,10 @@ int Server::pollConnections() {
 int main(int argc, char* argv[]) {
 	printf("start of server\n");
 
-	struct pollfd client_sockets[SOCKET_COUNT];
-	int serverfd = -3; // unused constant
-	int bytes_sent, bytes_recv;
-	char recv_message[] = "nothing";
-	int listenfd;
-	int child_pid = -100;
-	fd_set fds;
+	Server server1 = Server(MY_PORT);
 
-	if (listenfd = createListenSocket(MY_PORT); listenfd == -1) {
-		return -1;
-	}
-
-	if (listen(listenfd, 10) == -1) {
-		printf("listen() failed. Errno: %d\n", errno);
-		return 1;
-	}
-	
-	if (serverfd = createCommunicationSocket(listenfd); serverfd == -1) {
-		printf("Server failed to create communication socket\n");
-		return -1;
-	}
-	printf("Created communication socket with client\n");
-
-	client_sockets[0].fd = serverfd;
-	client_sockets[0].events = POLLIN;
-	client_sockets[0].revents = 0;
-	int abc = 1;
-	int socks_polled = 0;
 	while (1) {
-		if (socks_polled = poll(client_sockets, SOCKET_COUNT, 2500); socks_polled != 0) {
-
-			for (int i = 0; i < SOCKET_COUNT; i++) {
-
-				if (client_sockets[i].revents & POLLIN) {
-					if (bytes_recv = recv(client_sockets[i].fd, recv_message, 256, 0); bytes_recv == -1) {
-						printf("Couldn't recv message. Errno: %d\n", errno);
-					}
-					if (abc) {
-						recv_message[bytes_recv] = '\0';
-						printf("Received message: %s\n", recv_message);
-						abc = 0;
-					}
-					client_sockets[i].revents = 0;
-				}
-			}
-		}
+		server1.pollConnections();
 	}
 
 
