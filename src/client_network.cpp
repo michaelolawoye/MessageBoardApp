@@ -13,9 +13,18 @@ int main(int argc, char* argv[]) {
 
 	printf("socket: %d\n", sock);
 
-	std::string m = "hello from client\n";
+	std::string m;
 
-	sendMessage(sock, m);
+	while (1) {
+		std::cin>>m;
+		printf("\nm: %s, length: %d\n", m.c_str(), static_cast<int>(m.length()));
+		if (m.length() > 1) {
+			sendMessage(sock, m);
+		}
+		else {
+			break;
+		}
+	}
 
 	return 0;
 }

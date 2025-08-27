@@ -7,11 +7,9 @@ BoardMessage::BoardMessage(std::string message, std::string sender):
 }
 
 BoardMessage::~BoardMessage() {
-
 	destroySurface();
 	SDL_Log("Message class instance: \"%s\" destroyed\n", cMessage.c_str());
 }
-
 
 SDL_Surface* BoardMessage::getSurface() { return cSurface; }
 
@@ -27,7 +25,6 @@ std::string BoardMessage::getMessage() { return cMessage; }
 std::string BoardMessage::getSenderName() { return cSenderName; }
 
 void BoardMessage::changeMessage(std::string newMessage) { cMessage = newMessage; }
-
 
 bool BoardMessage::intializeSurface(TTF_Font* font) {
 

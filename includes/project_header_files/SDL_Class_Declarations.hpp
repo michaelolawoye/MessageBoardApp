@@ -71,11 +71,3 @@ class Board {
 		bool listTexturesAndSurfaces();
 
 };
-
-struct MessagePacket {
-
-	public:
-		std::string sMessage;
-		std::string sSender;
-		
-}
