@@ -30,7 +30,7 @@ class Server{
 		int handleNewConnection();
 		int deleteConnection(int clientfd);
 		int handleClientData(int clientfd);
-		int sendClientMessage(int clientfd);
+		int sendClientMessage(int clientfd, std::string message);
 		int handleClientError(int clientfd);
 
 
@@ -175,7 +175,7 @@ int Server::handleClientData(int clientfd) {
 	char recv_buffer[MAXMSGSIZE];
 	std::string fullmessage;
 
-	int bytes_recv;
+	int bytes_recv, total_bytes_recv = 0;
 	do {
 		if (bytes_recv = recv(clientfd, recv_buffer, MAXMSGSIZE, 0); bytes_recv < 0) {
 			printf("Server::handleClientData() recv() from client socket: %d failed. Errno: %d\n", clientfd, errno);
@@ -184,32 +184,47 @@ int Server::handleClientData(int clientfd) {
 
 		if (bytes_recv == 0) { // client ended communication
 			printf("Socket %d ended communication\n", clientfd);
-			exit(3);
+			exit(3); // DEBUG
 			deleteConnection(clientfd);
 			break;
 		}
-
+		recv_buffer[bytes_recv] = '\0';
 		fullmessage.append(recv_buffer);
+		total_bytes_recv += bytes_recv;
 	} while (bytes_recv >= MAXMSGSIZE);
 
 	printf("Message recieved from client socket %d: %s\n", clientfd, fullmessage.c_str());
-	printf("Bytes recieved: %d\n", bytes_recv);
+	printf("Bytes recieved: %d\n", total_bytes_recv);
 	return 1;
 }
 
-int Server::sendClientMessage(int clientfd) {
+int Server::sendClientMessage(int clientfd, std::string message) {
 
-	printf("Sent client %d a message\n", clientfd);
+	printf("Sent client %d a message\n", clientfd); // DEBUG
+
+	
 	return 0;
 }
 
 int Server::handleClientError(int clientfd) {
 
+	int err = 0;
+	socklen_t errlen = sizeof(err);
+
+	if (getsockopt(clientfd, SOL_SOCKET, SO_ERROR, &err, &errlen) == -1) {
+		printf("Server::handleClientError setsockopt() failed. Exiting program. Error: %s\n", strerror(errno));
+		exit(1);
+	}
+
+	if (err != 0) {
+		printf("Error on socket %d: %s\n", clientfd, strerror(err));
+	}
+
 	return 0;
 }
 
 int Server::pollConnections() {
-	printf("polling...\n");
+	printf("polling...\n\n");
 
 	struct timeval tv;
 	tv.tv_sec = 7;
@@ -221,8 +236,10 @@ int Server::pollConnections() {
 	*clsClientWfds = *clsMasterClientfds;
 	*clsClientEfds = *clsMasterClientfds;
 
+	FD_CLR(clsListenfd, clsClientWfds);
+	FD_CLR(clsListenfd, clsClientEfds);
+
 	int socks = select(clsMaxfd+1, clsClientRfds, nullptr, nullptr, 0);
-	printf("Max file descriptor: %d\n", clsMaxfd);
 	
 	for (int i = 0; i < clsMaxfd+1; i++) {
 		if (FD_ISSET(i, clsClientRfds)) {
@@ -233,17 +250,20 @@ int Server::pollConnections() {
 			}
 			else {
 				handleClientData(i);
+				printf("\n");
 			}
 		}
 
 		if (FD_ISSET(i, clsClientWfds)) {
 			printf("Socket %d ready to recieve message\n", i);
-			sendClientMessage(i);
+			std::string m = "hello";
+			sendClientMessage(i, m);
+			printf("\n");
 		}
 
 		if (FD_ISSET(i, clsClientEfds)) {
-			printf("Socket %d had an error\n", i);
 			handleClientError(i);
+			printf("\n");
 		}
 
 	}
@@ -252,11 +272,9 @@ int Server::pollConnections() {
 }
 
 int main(int argc, char* argv[]) {
-	printf("start of server\n");
-
 	Server server1 = Server(MY_PORT);
 
-	for (int i = 0; i < 10; i++) {
+	while (1) {
 		server1.pollConnections();
 	}
 
