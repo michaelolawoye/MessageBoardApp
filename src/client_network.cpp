@@ -17,6 +17,11 @@ int main(int argc, char* argv[]) {
 
 	while (1) {
 		std::cin>>m;
+		if (m == "end") {
+			printf("Socket closed\n");
+			close(sock);
+			return 0;
+		}
 		printf("\nm: %s, length: %d\n", m.c_str(), static_cast<int>(m.length()));
 		if (m.length() > 1) {
 			sendMessage(sock, m);
@@ -53,7 +58,6 @@ int createClientSocket(std::string serverip, int port) {
 
 	for (curr_addrinfo = myaddrinfo; curr_addrinfo !=  nullptr; curr_addrinfo = curr_addrinfo->ai_next) {
 
-
 		inet_ntop(curr_addrinfo->ai_family, get_inaddr(static_cast<struct sockaddr*>(curr_addrinfo->ai_addr)), ipstr, sizeof(ipstr));
 
 		if (clientfd = socket(curr_addrinfo->ai_family, curr_addrinfo->ai_socktype, curr_addrinfo->ai_protocol); clientfd == -1) {
@@ -76,7 +80,7 @@ int createClientSocket(std::string serverip, int port) {
 	}
 
 	if (curr_addrinfo == nullptr) {
-		printf("Socket connection failed...\n");
+		printf("Socket creation/connection failed...\n");
 		return -1;
 	}
 
@@ -95,9 +99,7 @@ int sendMessage(int clientfd, std::string message) {
 	int packet_bytes = 0;
 
 	std::string curr_message = message;
-
-	while (bytes_sent < message_bytes) {
-
+	do {
 		curr_message = message.substr(bytes_sent, message_bytes-bytes_sent);
 
 		packet_bytes = send(clientfd, curr_message.c_str(), curr_message.length(), 0);
@@ -110,9 +112,7 @@ int sendMessage(int clientfd, std::string message) {
 		}
 
 		bytes_sent += packet_bytes;
-	}
-
-	close(clientfd);
+	} while (bytes_sent < message_bytes);
 
 	return 0;
 }
