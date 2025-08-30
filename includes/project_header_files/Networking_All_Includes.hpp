@@ -22,5 +22,20 @@ void* get_inaddr(struct sockaddr* sa) {
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+std::string getDeviceName() {
+
+	char name[256];
+
+	#ifdef _WIN32
+		DWORD size = 256
+		GetComputerNameA(name, &size);
+
+	#else
+		gethostname(name, sizeof(name));
+	#endif
+
+	return static_cast<std::string>(name);
+}
+
 
 #endif

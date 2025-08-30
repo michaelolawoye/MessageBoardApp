@@ -14,9 +14,10 @@ int main(int argc, char* argv[]) {
 	printf("socket: %d\n", sock);
 
 	std::string m;
+	char blackhole[256];
 
 	while (1) {
-		std::cin>>m;
+		std::getline(std::cin,m);
 		if (m == "end") {
 			printf("Socket closed\n");
 			close(sock);
@@ -25,6 +26,7 @@ int main(int argc, char* argv[]) {
 		printf("\nm: %s, length: %d\n", m.c_str(), static_cast<int>(m.length()));
 		if (m.length() > 1) {
 			sendMessage(sock, m);
+			recv(sock, blackhole, 256, 0);
 		}
 		else {
 			break;
@@ -94,14 +96,16 @@ int createClientSocket(std::string serverip, int port) {
 
 int sendMessage(int clientfd, std::string message) {
 
+	std::string deviceName = getDeviceName();
+	std::string comma = ",";
+	std::string fullmessage = deviceName+comma+message;
 	int bytes_sent = 0;
-	int message_bytes = message.length();
+	int message_bytes = fullmessage.length();
 	int packet_bytes = 0;
 
-	std::string curr_message = message;
+	std::string curr_message = fullmessage;
 	do {
-		curr_message = message.substr(bytes_sent, message_bytes-bytes_sent);
-
+		curr_message = fullmessage.substr(bytes_sent, message_bytes-bytes_sent);
 		packet_bytes = send(clientfd, curr_message.c_str(), curr_message.length(), 0);
 		printf("Bytes sent: %d\n", packet_bytes);
 		fflush(stdout);

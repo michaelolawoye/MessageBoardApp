@@ -1,4 +1,5 @@
 #include "../includes/Project_Includes.hpp"
+#include "server_network.cpp"
 
 
 BoardMessage::BoardMessage(std::string message, std::string sender):
@@ -254,7 +255,10 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	
-	Board b{mRenderer, font};
+	Board boa{mRenderer, font};
+	Board &b = boa;
+	Server mServer{MY_PORT, b};
+
 
 	b.createTextures();
 	b.listTexturesAndSurfaces();
@@ -269,8 +273,15 @@ int main(int argc, char* argv[]) {
 	std::string potentialMessage{""};
 
 	while (!quit) {
+		switch (mServer.pollConnections()) {
+			case MESSAGE_RECVD:
+				break;
+			case MESSAGE_SENT:
+				break;
+			default:
+				break;
+		}
 		while (SDL_PollEvent(&e)) {
-
 			switch(e.type) {
 				case SDL_EVENT_QUIT:
 					quit = true;
@@ -279,7 +290,6 @@ int main(int argc, char* argv[]) {
 
 				case SDL_EVENT_KEY_DOWN:
 					if (handleKeyDown(mWindow, &(e.key), potentialMessage)) {
-
 						BoardMessage* bm = new BoardMessage(potentialMessage, getDeviceName());
 						b.addMessage(bm);
 						potentialMessage.erase();
@@ -409,17 +419,3 @@ void close(SDL_Window*& window, SDL_Renderer*& renderer, SDL_Surface*& surface) 
 }
 
 
-std::string getDeviceName() {
-
-	char name[256];
-
-	#ifdef _WIN32
-		DWORD size = 256
-		GetComputerNameA(name, &size);
-
-	#else
-		gethostname(name, sizeof(name));
-	#endif
-
-	return static_cast<std::string>(name);
-}
