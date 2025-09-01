@@ -1,3 +1,5 @@
+#ifndef SDL_CLASS_DECLARATIONS_HPP
+#define SDL_CLASS_DECLARATIONS_HPP
 class BoardMessage {
 
 	private:
@@ -71,3 +73,5 @@ class Board {
 		bool listTexturesAndSurfaces();
 
 };
+
+#endif

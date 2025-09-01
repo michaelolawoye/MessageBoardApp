@@ -31,7 +31,7 @@ class Server{
 
 		int clsMaxfd; // value for select()'s first argument
 
-		Board clsBoard;
+		Board& clsBoard;
 
 		void* get_inaddr(struct sockaddr*);
 		int createListenSocket();
@@ -49,8 +49,8 @@ class Server{
 
 		int pollConnections();
 
-		int getListenFd() { return clsListenfd; }
-		fd_set* getMasterFds() { return clsMasterClientfds; }
+		int getListenFd();
+		fd_set* getMasterFds();
 };
 
 void* Server::get_inaddr(struct sockaddr* sa) {
@@ -87,6 +87,9 @@ Server::~Server() {
 	delete clsClientWfds;
 	delete clsClientEfds;
 }
+
+fd_set* Server::getMasterFds() { return clsMasterClientfds; }
+int Server::getListenFd() { return clsListenfd; }
 
 int Server::createListenSocket() {
 
