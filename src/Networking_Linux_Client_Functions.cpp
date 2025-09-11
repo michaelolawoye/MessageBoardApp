@@ -26,11 +26,12 @@ int main(int argc, char* argv[]) {
 		printf("\nm: %s, length: %d\n", m.c_str(), static_cast<int>(m.length()));
 		if (m.length() > 1) {
 			sendMessage(sock, m);
-			recv(sock, blackhole, 256, 0);
 		}
 		else {
+			printf("got here\n"); // DEBUG
 			break;
 		}
+		printf("end of loop\n");
 	}
 
 	return 0;
