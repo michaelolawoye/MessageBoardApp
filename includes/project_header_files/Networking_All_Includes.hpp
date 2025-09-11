@@ -5,6 +5,7 @@
 	#include "Networking_Windows_Includes.hpp"
 #else
 	#include "Networking_Linux_Includes.hpp"
+	#include "Networking_Linux_Class_Declarations.hpp"
 #endif
 
 #define MY_PORT 5050

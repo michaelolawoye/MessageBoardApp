@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
 	while (!quit) {
 		switch (mServer.pollConnections()) {
 			case MESSAGE_RECVD:
+				new_render = true;
 				break;
 			case MESSAGE_SENT:
 				break;
