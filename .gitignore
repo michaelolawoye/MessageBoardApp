@@ -1,3 +1,6 @@
 *.exe
 server_network
 client_network
+client_main
+testclient.cpp
+testclient

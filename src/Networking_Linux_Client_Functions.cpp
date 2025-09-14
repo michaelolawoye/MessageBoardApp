@@ -1,41 +1,5 @@
 #include "../includes/Project_Includes.hpp"
 
-int createClientSocket(std::string, int);
-int sendMessage(int clientfd, std::string message);
-
-int main(int argc, char* argv[]) {
-
-	int sock;
-
-	if (sock = createClientSocket("Ubuntu-24", MY_PORT); sock == -1) {
-		return -1;
-	}
-
-	printf("socket: %d\n", sock);
-
-	std::string m;
-	char blackhole[256];
-
-	while (1) {
-		std::getline(std::cin,m);
-		if (m == "end") {
-			printf("Socket closed\n");
-			close(sock);
-			return 0;
-		}
-		printf("\nm: %s, length: %d\n", m.c_str(), static_cast<int>(m.length()));
-		if (m.length() > 1) {
-			sendMessage(sock, m);
-		}
-		else {
-			printf("got here\n"); // DEBUG
-			break;
-		}
-		printf("end of loop\n");
-	}
-
-	return 0;
-}
 
 int createClientSocket(std::string serverip, int port) {
 
