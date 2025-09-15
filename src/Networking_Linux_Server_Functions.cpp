@@ -1,12 +1,6 @@
 constexpr int SOCKET_COUNT{2};
 constexpr int MAXMSGSIZE{256};
 
-enum {
-	NO_CHANGE,
-	MESSAGE_RECVD,
-	MESSAGE_SENT,
-	ERROR
-};
 
 
 void* Server::get_inaddr(struct sockaddr* sa) {
@@ -269,7 +263,7 @@ int Server::pollConnections() {
 		// 	std::string m = "hello";
 		// 	sendClientMessage(i, m);
 		// 	SDL_Log("\n");
-		// 	return MESSAGE_SENT;
+		// 	return MESSAGE_SEND;
 		// }
 
 		// if (FD_ISSET(i, clsClientEfds)) {

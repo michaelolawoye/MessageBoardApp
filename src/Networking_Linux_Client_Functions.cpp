@@ -1,24 +1,61 @@
 #include "../includes/Project_Includes.hpp"
 
 
-int createClientSocket(std::string serverip, int port) {
+class Client {
+
+	private:
+		double clsClientCycles;
+
+		int clsSocket;
+		int clsServerPort;
+		std::string clsServerName; // can be IPv4, IPv6 or name
+
+		int createSocket();	
+		int handleServerData(std::string message);	
+
+		Board& clsBoard;
+
+
+	public:
+		Client(std::string server_name, int server_port, Board& board);
+		~Client();
+
+		int sendMessage(std::string message);
+		int getSocket();
+		int pollSocket();
+};
+
+Client::Client(std::string server_name, int server_port, Board& board): clsServerName(server_name), clsServerPort(server_port), clsBoard(board) {
+
+	clsClientCycles = CLIENT_TIMEOUT;
+	if (createSocket() == -1) {
+		exit(1);
+	}
+} 
+
+Client::~Client() {
+	close(clsSocket);
+}
+
+int Client::getSocket() { return clsSocket; }
+
+int Client::createSocket() {
 
 	struct addrinfo *myaddrinfo, hints;
 	struct addrinfo *curr_addrinfo;
 	int gai_error;
-	int clientfd;
 
 	char ch_port[50];
 	char ipstr[INET6_ADDRSTRLEN];
 	
-	sprintf(ch_port, "%d", port);
+	sprintf(ch_port, "%d", clsServerPort);
 
 	bzero(&hints, sizeof(hints));
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if (gai_error = getaddrinfo(serverip.c_str(), ch_port, &hints, &myaddrinfo); gai_error != 0) {
+	if (gai_error = getaddrinfo(clsServerName.c_str(), ch_port, &hints, &myaddrinfo); gai_error != 0) {
 		printf("getaddrinfo() failed. Error: %d\n", gai_error);
 		return -1;
 	}
@@ -27,21 +64,21 @@ int createClientSocket(std::string serverip, int port) {
 
 		inet_ntop(curr_addrinfo->ai_family, get_inaddr(static_cast<struct sockaddr*>(curr_addrinfo->ai_addr)), ipstr, sizeof(ipstr));
 
-		if (clientfd = socket(curr_addrinfo->ai_family, curr_addrinfo->ai_socktype, curr_addrinfo->ai_protocol); clientfd == -1) {
+		if (clsSocket = socket(curr_addrinfo->ai_family, curr_addrinfo->ai_socktype, curr_addrinfo->ai_protocol); clsSocket == -1) {
 			printf("socket() failed for %s, trying next one. errno: %d\n", ipstr, errno);
-			close(clientfd);
+			close(clsSocket);
 			continue;
 		}
 
 		printf("Client created socket for ip: %s\n", ipstr);
 
-		if (connect(clientfd, curr_addrinfo->ai_addr, curr_addrinfo->ai_addrlen) == -1) {
+		if (connect(clsSocket, curr_addrinfo->ai_addr, curr_addrinfo->ai_addrlen) == -1) {
 			printf("connect() failed for %s, trying next ip. errno: %d\n", ipstr, errno);
-			close(clientfd);
+			close(clsSocket);
 			continue;
 		}
 
-		printf("Client connected socket %d to ip: %s\n", clientfd, ipstr);
+		printf("Client connected socket %d to ip: %s\n", clsSocket, ipstr);
 
 		break;
 	}
@@ -55,11 +92,10 @@ int createClientSocket(std::string serverip, int port) {
 
 	freeaddrinfo(curr_addrinfo);
 
-	return clientfd;
+	return clsSocket;
 }
 
-
-int sendMessage(int clientfd, std::string message) {
+int Client::sendMessage(std::string message) {
 
 	std::string deviceName = getDeviceName();
 	std::string comma = ",";
@@ -71,7 +107,7 @@ int sendMessage(int clientfd, std::string message) {
 	std::string curr_message = fullmessage;
 	do {
 		curr_message = fullmessage.substr(bytes_sent, message_bytes-bytes_sent);
-		packet_bytes = send(clientfd, curr_message.c_str(), curr_message.length(), 0);
+		packet_bytes = send(clsSocket, curr_message.c_str(), curr_message.length(), 0);
 		printf("Bytes sent: %d\n", packet_bytes);
 		fflush(stdout);
 
@@ -82,6 +118,25 @@ int sendMessage(int clientfd, std::string message) {
 
 		bytes_sent += packet_bytes;
 	} while (bytes_sent < message_bytes);
+
+	return 0;
+}
+
+int Client::handleServerData(std::string message) {
+
+	return 0;
+}
+
+int Client::pollSocket() {
+
+	int bytes_recv = 0;
+	char recv_buff[256];
+	while (clsClientCycles > 0) {
+
+
+		
+		clsClientCycles--;
+	}
 
 	return 0;
 }

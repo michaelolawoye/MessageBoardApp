@@ -9,8 +9,16 @@
 #endif
 
 #define MY_PORT 5050
+#define CLIENT_TIMEOUT 1000
 #include  <stdlib.h>
 #include <signal.h>
+
+enum {
+	NO_CHANGE,
+	MESSAGE_RECVD,
+	MESSAGE_SEND,
+	ERROR
+};
 
 
 

@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 			case MESSAGE_RECVD:
 				new_render = true;
 				break;
-			case MESSAGE_SENT:
+			case MESSAGE_SEND:
 				break;
 			default:
 				break;
