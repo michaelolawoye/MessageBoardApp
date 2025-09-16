@@ -1,5 +1,5 @@
 #include "Networking_Linux_Client_Functions.cpp"
-
+#include "SDL_Class_Functions.cpp"
 
 
 int main(int argc, char* argv[]) {
@@ -28,25 +28,61 @@ int main(int argc, char* argv[]) {
 
 	SDL_Log("socket: %d\n", mClient.getSocket());
 
-	std::string m;
-	char blackhole[256];
+	mBoard.createTextures();
+	mBoard.listTexturesAndSurfaces();
 
-	while (1) {
-		std::getline(std::cin,m);
-		if (m == "end") {
-			SDL_Log("Socket closed\n");
-			return 0;
+	SDL_FRect dstRect{0, 0, SCREEN_WIDTH/3, SCREEN_HEIGHT/8};
+
+	bool quit = false;
+	bool new_render = true;
+	SDL_Event e;
+	SDL_zero(e);
+	std::string potentialMessage{""};
+
+	while (!quit) {
+		while (SDL_PollEvent(&e)) {
+			switch(e.type) {
+				case SDL_EVENT_QUIT:
+					quit = true;
+					break;
+
+
+				case SDL_EVENT_KEY_DOWN:
+					if (handleKeyDown(mWindow, &(e.key), potentialMessage)) {
+						BoardMessage* bm = new BoardMessage(potentialMessage, getDeviceName());
+						mBoard.addMessage(bm);
+						mClient.sendMessage(potentialMessage);
+						SDL_Log("\nmessage: %s, length: %d\n", potentialMessage.c_str(), static_cast<int>(potentialMessage.length()));	
+						potentialMessage.erase();
+
+						new_render = true;
+					}
+					break;
+
+				case SDL_EVENT_TEXT_INPUT:
+					handleTextInput(mWindow, &(e.text), potentialMessage);
+					break;
+
+				default:
+					break;
+
+			}
 		}
-		SDL_Log("\nmessage: %s, length: %d\n", m.c_str(), static_cast<int>(m.length()));
-		if (m.length() >= 1) {
-			mClient.sendMessage(m);
+
+		if (new_render) {
+			mBoard.createTextures();
+			new_render = false;
 		}
-		else {
-			SDL_Log("\nmessage can't be empty\n"); // DEBUG
-			break;
-		}
-		SDL_Log("\n");
+
+		SDL_SetRenderDrawColor(mRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+		SDL_RenderClear(mRenderer);
+
+		b.renderTextures(dstRect);
+		SDL_RenderPresent(mRenderer);
 	}
+
+
+	close(mWindow, mRenderer, mSurface);
 
 	return 0;
 }
