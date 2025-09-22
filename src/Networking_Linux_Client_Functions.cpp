@@ -1,5 +1,5 @@
 #include "../includes/Project_Includes.hpp"
-
+constexpr int MAXMSGSIZE{256};
 
 class Client {
 
@@ -10,8 +10,8 @@ class Client {
 		int clsServerPort;
 		std::string clsServerName; // can be IPv4, IPv6 or name
 
-		int createSocket();	
-		int handleServerData(std::string message);	
+		int createSocket();
+		int recvMessage();
 
 		Board& clsBoard;
 
@@ -22,7 +22,6 @@ class Client {
 
 		int sendMessage(std::string message);
 		int getSocket();
-		int pollSocket();
 };
 
 Client::Client(std::string server_name, int server_port, Board& board): clsServerName(server_name), clsServerPort(server_port), clsBoard(board) {
@@ -122,21 +121,70 @@ int Client::sendMessage(std::string message) {
 	return 0;
 }
 
-int Client::handleServerData(std::string message) {
+int Client::recvMessage() {
 
-	return 0;
-}
+	char recv_buffer[MAXMSGSIZE];
+	std::string fullmessage;
 
-int Client::pollSocket() {
+	int bytes_recv, total_bytes_recv = 0;
+	do {
+		if (bytes_recv = recv(clsSocket, recv_buffer, MAXMSGSIZE, MSG_DONTWAIT); bytes_recv < 0) {
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				return 0;
+			}
+			SDL_Log("Client::recvMessage() failed. Errno: %d\n", errno);
+			return -1;
+		}
 
-	int bytes_recv = 0;
-	char recv_buff[256];
-	while (clsClientCycles > 0) {
+		if (bytes_recv == 0) { // server ended communication
+			SDL_Log("Socket %d ended communication\n", clsSocket);
+			exit(3); // DEBUG
+			break;
+		}
+		recv_buffer[bytes_recv] = '\0';
+		fullmessage.append(recv_buffer);
+		total_bytes_recv += bytes_recv;
+	} while (bytes_recv >= MAXMSGSIZE);
 
+	char* fullmessage_c = (char*)malloc(sizeof(char)*total_bytes_recv);
+	char* msgPtr = fullmessage_c;
+	char* type = (char*)malloc(sizeof(char));
 
-		
-		clsClientCycles--;
+	char *sender = (char*)malloc(sizeof(char)*total_bytes_recv);
+	char *senderMessage = (char*)malloc(sizeof(char)*total_bytes_recv);
+
+	char* temp = (char*)malloc(sizeof(char)*total_bytes_recv);
+
+	type = strtok_r(fullmessage_c, ",", &msgPtr);
+
+	// message recieved structure: 
+	// m,sendername,sendermessage
+	// b,sendername1,sendermessage1;sendername2,sendermessage2;
+	if (strncmp(type, "m", 1) == 0) { // recieved a single message
+		sender = strtok_r(nullptr, ",", &msgPtr);
+		senderMessage = strtok_r(nullptr, ";", &msgPtr);
+
+		BoardMessage* newBM = new BoardMessage(senderMessage, sender);	
+		clsBoard.addMessage(newBM);
+	}
+	else { // recieved a new board of messages
+		clsBoard.destroyMessages();
+		char* msgPtr2 = temp;
+		while ((temp = strtok_r(nullptr, ";", &msgPtr)) != nullptr) {
+			sender = strtok_r(temp, ",", &msgPtr2);
+			senderMessage = strtok_r(nullptr, ";", &msgPtr2);
+
+			BoardMessage* newBM = new BoardMessage(senderMessage, sender);
+			clsBoard.addMessage(newBM);
+		}
 	}
 
-	return 0;
+
+	free(fullmessage_c);
+	free(type);
+	free(sender);
+	free(senderMessage);
+	free(temp);
+
+	return 1;
 }

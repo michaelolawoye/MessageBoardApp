@@ -175,11 +175,13 @@ int Server::handleClientData(int clientfd) {
 	sender = strtok_r(fullmessage_c, ",", &msgPtr);
 	senderMessage = strtok_r(nullptr, ",", &msgPtr);
 
+
 	BoardMessage *newBM = new BoardMessage(senderMessage, sender);
 	clsBoard.addMessage(newBM);
 
 	SDL_Log("Name: %s\nMessage: %s\n", sender, senderMessage);
 
+	
 	return 0;
 }
 
