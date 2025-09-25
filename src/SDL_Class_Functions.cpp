@@ -97,6 +97,7 @@ bool Board::listTexturesAndSurfaces() {
 
 // Message methods
 int Board::getMessageCount() { return cMessageCount; }
+BoardMessage& Board::getCurrMessage() { return currMessage; }
 
 bool Board::addMessage(BoardMessage* message) {
 
@@ -130,6 +131,7 @@ bool Board::addMessage(BoardMessage* message) {
 
 	return true;
 }
+
 
 bool Board::moveToNextMessage() {
 

@@ -60,6 +60,8 @@ class Board {
 		bool addMessage(BoardMessage*);
 		bool renderTextures(SDL_FRect);
 
+		BoardMessage* getCurrMessage();
+
 		bool destroyMessages();
 
 		int getMessageCount();

@@ -187,12 +187,24 @@ int Server::handleClientData(int clientfd) {
 
 int Server::sendClientMessage(int clientfd, std::string message) {
 
-	SDL_Log("Sent client %d a message\n", clientfd); // DEBUG
-
 	char buffer[MAXMSGSIZE];
 	int bytes_stored;
 	int bytes_sent;
-	if (bytes_stored = snprintf(buffer, MAXMSGSIZE-1, "%s,%s", "Name", message.c_str()); bytes_stored == -1) {
+
+	if (message == nullptr) {
+		SDL_Log("Sent client %d entire board messages\n", clientfd);
+
+		BoardMessage* curr = clsBoard.getCurrMessage();
+
+		do {
+			
+		} while (clsBoard.moveToNextMessage());
+		return 0
+	}
+
+	SDL_Log("Sent client %d a message\n", clientfd); // DEBUG
+
+	if (bytes_stored = snprintf(buffer, MAXMSGSIZE-1, "%c,%s,%s", 'm', "Name", message.c_str()); bytes_stored == -1) {
 		SDL_Log("Server::sendClientMessage Error during formatting\n");
 		exit(1); // DEBUG
 	}
