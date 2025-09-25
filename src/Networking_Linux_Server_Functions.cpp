@@ -190,16 +190,34 @@ int Server::sendClientMessage(int clientfd, std::string message) {
 	char buffer[MAXMSGSIZE];
 	int bytes_stored;
 	int bytes_sent;
+	std::string fullmessage = "";
 
-	if (message == nullptr) {
+	if (message.length() == 0) {
 		SDL_Log("Sent client %d entire board messages\n", clientfd);
-
-		BoardMessage* curr = clsBoard.getCurrMessage();
+		std::string c = "b";
+		fullmessage.append(c);
 
 		do {
-			
+			BoardMessage* curr = clsBoard.getCurrMessage();
+			if (bytes_stored = snprintf(buffer, MAXMSGSIZE-1, "%s,%s;", curr->getSenderName().c_str(), curr->getMessage().c_str()); bytes_stored == -1) {
+				SDL_Log("Server::sendClientMessage Error during formatting\n");
+				exit(1); // DEBUG
+			}
+
+			if (bytes_stored > MAXMSGSIZE-1) {
+				SDL_Log("Message server is trying to send is too large\n");
+				return -1;
+			}
+
+			buffer[bytes_stored] = '\0';
+
+			fullmessage.append(buffer);
+
 		} while (clsBoard.moveToNextMessage());
-		return 0
+
+		SDL_Log("%s\n", fullmessage.c_str());
+
+		return 0;
 	}
 
 	SDL_Log("Sent client %d a message\n", clientfd); // DEBUG

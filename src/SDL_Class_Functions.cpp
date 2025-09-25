@@ -97,7 +97,7 @@ bool Board::listTexturesAndSurfaces() {
 
 // Message methods
 int Board::getMessageCount() { return cMessageCount; }
-BoardMessage& Board::getCurrMessage() { return currMessage; }
+BoardMessage* Board::getCurrMessage() { return currMessage; }
 
 bool Board::addMessage(BoardMessage* message) {
 
