@@ -11,7 +11,6 @@ class Client {
 		std::string clsServerName; // can be IPv4, IPv6 or name
 
 		int createSocket();
-		int recvMessage();
 
 		Board& clsBoard;
 
@@ -22,6 +21,7 @@ class Client {
 
 		int sendMessage(std::string message);
 		int getSocket();
+		int recvMessage();
 };
 
 Client::Client(std::string server_name, int server_port, Board& board): clsServerName(server_name), clsServerPort(server_port), clsBoard(board) {
@@ -179,12 +179,6 @@ int Client::recvMessage() {
 		}
 	}
 
-
-	free(fullmessage_c);
-	free(type);
-	free(sender);
-	free(senderMessage);
-	free(temp);
 
 	return 1;
 }

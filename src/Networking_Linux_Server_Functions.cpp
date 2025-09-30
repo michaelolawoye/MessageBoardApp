@@ -193,8 +193,9 @@ int Server::sendClientMessage(int clientfd, std::string message) {
 	std::string fullmessage = "";
 
 	if (message.length() == 0) {
+		if (clsBoard.getMessageCount() == 0) { return 0; }
 		SDL_Log("Sent client %d entire board messages\n", clientfd);
-		std::string c = "b";
+		std::string c = "b,";
 		fullmessage.append(c);
 
 		do {
@@ -215,7 +216,25 @@ int Server::sendClientMessage(int clientfd, std::string message) {
 
 		} while (clsBoard.moveToNextMessage());
 
-		SDL_Log("%s\n", fullmessage.c_str());
+		SDL_Log("Full message: %s\n", fullmessage.c_str());
+
+		int packet_bytes = 0;
+		int message_bytes = fullmessage.length();
+		bytes_sent = 0;
+		std::string curr_message;
+			
+		do {
+			curr_message = fullmessage.substr(bytes_sent, message_bytes-bytes_sent);
+			SDL_Log("In while loop\n");
+			if (packet_bytes = send(clientfd, curr_message.c_str(), curr_message.length(), 0); packet_bytes == -1) {
+				SDL_Log("Server::sendClientMessage send() failed for full board message to client %d, errno: %d\n", clientfd, errno);
+				return -1;
+			}
+
+			SDL_Log("Bytes sent: %d\n", packet_bytes);
+
+			bytes_sent += packet_bytes;
+		} while (bytes_sent < message_bytes);
 
 		return 0;
 	}
@@ -234,7 +253,7 @@ int Server::sendClientMessage(int clientfd, std::string message) {
 	buffer[bytes_stored] = '\0';
 
 	if (bytes_sent = send(clientfd, buffer, MAXMSGSIZE, 0); bytes_sent == -1) {
-		SDL_Log("Server::sendClientMessage send() failed. errno: %d\n", errno);
+		SDL_Log("Server::sendClientMessage send() failed for client %d. errno: %d\n", clientfd, errno);
 		return -1;
 	}
 
@@ -282,7 +301,8 @@ int Server::pollConnections() {
 			SDL_Log("Socket %d sent a message\n", i);
 			if (i == clsListenfd) { // new client trying to connect
 				SDL_Log("New connection\n");
-				handleNewConnection();
+				int newfd = handleNewConnection();
+				sendClientMessage(newfd, "");
 			}
 			else {
 				handleClientData(i);
