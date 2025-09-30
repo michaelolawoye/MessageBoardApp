@@ -147,27 +147,29 @@ int Client::recvMessage() {
 	} while (bytes_recv >= MAXMSGSIZE);
 
 	char* fullmessage_c = (char*)malloc(sizeof(char)*total_bytes_recv);
+	strncpy(fullmessage_c, fullmessage.c_str(), fullmessage.length());
 	char* msgPtr = fullmessage_c;
-	char* type = (char*)malloc(sizeof(char));
 
 	char *sender = (char*)malloc(sizeof(char)*total_bytes_recv);
 	char *senderMessage = (char*)malloc(sizeof(char)*total_bytes_recv);
 
 	char* temp = (char*)malloc(sizeof(char)*total_bytes_recv);
-
-	type = strtok_r(fullmessage_c, ",", &msgPtr);
+	SDL_Log("fullmessage: %s\n", fullmessage.c_str()); // DEBUG
+	char* type = strtok_r(fullmessage_c, ",", &msgPtr);
+	type[1] = '\0';
+	SDL_Log("type: %s\n", type);
 
 	// message recieved structure: 
 	// m,sendername,sendermessage
 	// b,sendername1,sendermessage1;sendername2,sendermessage2;
-	if (strncmp(type, "m", 1) == 0) { // recieved a single message
+	if (type[0] == 'm') { // recieved a single message
 		sender = strtok_r(nullptr, ",", &msgPtr);
 		senderMessage = strtok_r(nullptr, ";", &msgPtr);
 
 		BoardMessage* newBM = new BoardMessage(senderMessage, sender);	
 		clsBoard.addMessage(newBM);
 	}
-	else { // recieved a new board of messages
+	else if (type[0] == 'b') { // recieved a new board of messages
 		clsBoard.destroyMessages();
 		char* msgPtr2 = temp;
 		while ((temp = strtok_r(nullptr, ";", &msgPtr)) != nullptr) {
@@ -177,6 +179,10 @@ int Client::recvMessage() {
 			BoardMessage* newBM = new BoardMessage(senderMessage, sender);
 			clsBoard.addMessage(newBM);
 		}
+	}
+	else {
+		SDL_Log("Message got messed up.\n");
+		return -1;
 	}
 
 

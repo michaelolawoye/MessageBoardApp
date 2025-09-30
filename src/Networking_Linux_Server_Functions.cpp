@@ -203,6 +203,7 @@ int Server::sendClientMessage(int clientfd, std::string message) {
 			if (bytes_stored = snprintf(buffer, MAXMSGSIZE-1, "%s,%s;", curr->getSenderName().c_str(), curr->getMessage().c_str()); bytes_stored == -1) {
 				SDL_Log("Server::sendClientMessage Error during formatting\n");
 				exit(1); // DEBUG
+				return -1;
 			}
 
 			if (bytes_stored > MAXMSGSIZE-1) {
@@ -228,6 +229,7 @@ int Server::sendClientMessage(int clientfd, std::string message) {
 			SDL_Log("In while loop\n");
 			if (packet_bytes = send(clientfd, curr_message.c_str(), curr_message.length(), 0); packet_bytes == -1) {
 				SDL_Log("Server::sendClientMessage send() failed for full board message to client %d, errno: %d\n", clientfd, errno);
+				exit(1); // DEBUG
 				return -1;
 			}
 
@@ -244,6 +246,7 @@ int Server::sendClientMessage(int clientfd, std::string message) {
 	if (bytes_stored = snprintf(buffer, MAXMSGSIZE-1, "%c,%s,%s", 'm', "Name", message.c_str()); bytes_stored == -1) {
 		SDL_Log("Server::sendClientMessage Error during formatting\n");
 		exit(1); // DEBUG
+		return -1;
 	}
 	if (bytes_stored > MAXMSGSIZE-1) {
 		SDL_Log("Message server is trying to send is too large\n");

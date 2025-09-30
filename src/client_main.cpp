@@ -41,7 +41,9 @@ int main(int argc, char* argv[]) {
 
 	while (!quit) {
 		while (SDL_PollEvent(&e)) {
-			mClient.recvMessage();
+			if (mClient.recvMessage()) {
+				new_render = true;
+			}
 			switch(e.type) {
 				case SDL_EVENT_QUIT:
 					quit = true;
