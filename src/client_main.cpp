@@ -1,5 +1,4 @@
 #include "Networking_Linux_Client_Functions.cpp"
-#include "SDL_Class_Functions.cpp"
 
 
 int main(int argc, char* argv[]) {
@@ -182,5 +181,3 @@ void close(SDL_Window*& window, SDL_Renderer*& renderer, SDL_Surface*& surface) 
 	TTF_Quit();
 	SDL_Quit();	
 }
-
-

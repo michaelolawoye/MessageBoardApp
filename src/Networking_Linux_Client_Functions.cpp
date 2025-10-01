@@ -1,28 +1,4 @@
-#include "../includes/Project_Includes.hpp"
-constexpr int MAXMSGSIZE{256};
-
-class Client {
-
-	private:
-		double clsClientCycles;
-
-		int clsSocket;
-		int clsServerPort;
-		std::string clsServerName; // can be IPv4, IPv6 or name
-
-		int createSocket();
-
-		Board& clsBoard;
-
-
-	public:
-		Client(std::string server_name, int server_port, Board& board);
-		~Client();
-
-		int sendMessage(std::string message);
-		int getSocket();
-		int recvMessage();
-};
+#include "SDL_Class_Functions.cpp"
 
 Client::Client(std::string server_name, int server_port, Board& board): clsServerName(server_name), clsServerPort(server_port), clsBoard(board) {
 
@@ -131,7 +107,6 @@ int Client::recvMessage() {
 	do {
 		if (bytes_recv = recv(clsSocket, recv_buffer, MAXMSGSIZE, MSG_DONTWAIT); bytes_recv < 0) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				SDL_Log(".");
 				return 0;
 			}
 			SDL_Log("Client::recvMessage() failed. Errno: %d\n", errno);

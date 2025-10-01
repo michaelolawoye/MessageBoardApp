@@ -1,4 +1,3 @@
-#include "SDL_Class_Functions.cpp"
 #include "Networking_Linux_Server_Functions.cpp"
 
 
@@ -182,5 +181,3 @@ void close(SDL_Window*& window, SDL_Renderer*& renderer, SDL_Surface*& surface) 
 	TTF_Quit();
 	SDL_Quit();	
 }
-
-

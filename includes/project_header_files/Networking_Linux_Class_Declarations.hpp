@@ -19,7 +19,6 @@ class Server{
 
 		std::unordered_map<int, std::queue<std::string>> clsClientMsgQueues; // keeps track of each client's queue of unrecieved messages
 
-		void* get_inaddr(struct sockaddr*);
 		int createListenSocket();
 		int handleNewConnection();
 		int deleteConnection(int clientfd);
@@ -38,6 +37,30 @@ class Server{
 
 		int getListenFd();
 		fd_set* getMasterFds();
+};
+
+
+class Client {
+
+	private:
+		double clsClientCycles;
+
+		int clsSocket;
+		int clsServerPort;
+		std::string clsServerName; // can be IPv4, IPv6 or name
+
+		int createSocket();
+
+		Board& clsBoard;
+
+
+	public:
+		Client(std::string server_name, int server_port, Board& board);
+		~Client();
+
+		int sendMessage(std::string message);
+		int getSocket();
+		int recvMessage();
 };
 
 #endif

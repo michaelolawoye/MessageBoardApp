@@ -14,6 +14,4 @@
 #include <poll.h>
 #include <fcntl.h>
 
-
-
 #endif

@@ -1,16 +1,6 @@
-constexpr int SOCKET_COUNT{2};
-constexpr int MAXMSGSIZE{256};
+#include "SDL_Class_Functions.cpp"
 
 
-
-void* Server::get_inaddr(struct sockaddr* sa) {
-
-	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	}
-
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
 
 Server::Server(int port, Board& board): clsPort{port}, clsBoard{board} {
 

@@ -46,5 +46,4 @@ std::string getDeviceName() {
 	return static_cast<std::string>(name);
 }
 
-
 #endif

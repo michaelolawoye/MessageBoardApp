@@ -1,5 +1,5 @@
 CC = g++
-SERVER_SOURCE_FILE = src/main.cpp
+SERVER_SOURCE_FILE = src/server_main.cpp
 CLIENT_SOURCE_FILE = src/client_main.cpp
 COMPILER_FLAGS = 
 LINKER_FLAGS = -lSDL3 -lSDL3_image -lSDL3_ttf

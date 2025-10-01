@@ -10,4 +10,6 @@ constexpr int TEXT_WRAP_WIDTH{600};
 constexpr int PROMPT_WIDTH{SCREEN_WIDTH};
 constexpr int PROMPT_HEIGHT{SCREEN_HEIGHT/6};
 
+constexpr int MAXMSGSIZE{256};
+
 #endif
