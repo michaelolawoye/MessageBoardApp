@@ -127,9 +127,11 @@ int Client::recvMessage() {
 	std::string fullmessage;
 
 	int bytes_recv, total_bytes_recv = 0;
+	// do while loop to get message sent by server into fullmessage variable
 	do {
 		if (bytes_recv = recv(clsSocket, recv_buffer, MAXMSGSIZE, MSG_DONTWAIT); bytes_recv < 0) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				SDL_Log(".");
 				return 0;
 			}
 			SDL_Log("Client::recvMessage() failed. Errno: %d\n", errno);
@@ -147,44 +149,24 @@ int Client::recvMessage() {
 	} while (bytes_recv >= MAXMSGSIZE);
 
 	char* fullmessage_c = (char*)malloc(sizeof(char)*total_bytes_recv);
-	strncpy(fullmessage_c, fullmessage.c_str(), fullmessage.length());
 	char* msgPtr = fullmessage_c;
+	strncpy(fullmessage_c, fullmessage.c_str(), fullmessage.length());
 
 	char *sender = (char*)malloc(sizeof(char)*total_bytes_recv);
 	char *senderMessage = (char*)malloc(sizeof(char)*total_bytes_recv);
 
-	char* temp = (char*)malloc(sizeof(char)*total_bytes_recv);
-	SDL_Log("fullmessage: %s\n", fullmessage.c_str()); // DEBUG
-	char* type = strtok_r(fullmessage_c, ",", &msgPtr);
-	type[1] = '\0';
-	SDL_Log("type: %s\n", type);
+	char* msg_block = (char*)malloc(sizeof(char)*total_bytes_recv);
+	char* msgPtr2 = msg_block;
 
-	// message recieved structure: 
-	// m,sendername,sendermessage
-	// b,sendername1,sendermessage1;sendername2,sendermessage2;
-	if (type[0] == 'm') { // recieved a single message
-		sender = strtok_r(nullptr, ",", &msgPtr);
-		senderMessage = strtok_r(nullptr, ";", &msgPtr);
+	strtok_r(fullmessage_c, ",", &msgPtr);
+	SDL_Log("fullmessage_c: %s\n", fullmessage.c_str());
 
-		BoardMessage* newBM = new BoardMessage(senderMessage, sender);	
+	while ((msg_block = strtok_r(nullptr, ";", &msgPtr)) != nullptr) {
+		sender = strtok_r(msg_block, ",", &msgPtr2);
+		senderMessage = strtok_r(nullptr, ";", &msgPtr2);
+		SDL_Log("sender: %s, senderMessage: %s", sender, senderMessage);
+		BoardMessage* newBM = new BoardMessage(senderMessage, sender);
 		clsBoard.addMessage(newBM);
 	}
-	else if (type[0] == 'b') { // recieved a new board of messages
-		clsBoard.destroyMessages();
-		char* msgPtr2 = temp;
-		while ((temp = strtok_r(nullptr, ";", &msgPtr)) != nullptr) {
-			sender = strtok_r(temp, ",", &msgPtr2);
-			senderMessage = strtok_r(nullptr, ";", &msgPtr2);
-
-			BoardMessage* newBM = new BoardMessage(senderMessage, sender);
-			clsBoard.addMessage(newBM);
-		}
-	}
-	else {
-		SDL_Log("Message got messed up.\n");
-		return -1;
-	}
-
-
 	return 1;
 }

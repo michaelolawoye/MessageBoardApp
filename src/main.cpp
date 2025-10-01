@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
 					if (handleKeyDown(mWindow, &(e.key), potentialMessage)) {
 						BoardMessage* bm = new BoardMessage(potentialMessage, getDeviceName());
 						b.addMessage(bm);
+						mServer.addMessageToQueues(getDeviceName(), potentialMessage);
 						potentialMessage.erase();
 
 						new_render = true;

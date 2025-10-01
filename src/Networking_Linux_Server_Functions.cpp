@@ -36,6 +36,7 @@ Server::~Server() {
 	delete clsClientRfds;
 	delete clsClientWfds;
 	delete clsClientEfds;
+	close(clsListenfd);
 }
 
 fd_set* Server::getMasterFds() { return clsMasterClientfds; }
@@ -123,8 +124,26 @@ int Server::handleNewConnection() {
 		clsMaxfd = newfd;
 	}
 
-	clsClientMessages[newfd].push("");
-	clsClientMessages[newfd].pop();
+	clsClientMsgQueues[newfd].push("");
+	clsClientMsgQueues[newfd].pop();
+
+	if (clsBoard.getMessageCount() == 0) {
+		return newfd;
+	}
+
+	std::string newMessage;
+	clsBoard.resetCurrMessage();
+	do {
+		newMessage = clsBoard.getCurrMessage()->getSenderName() + "," + clsBoard.getCurrMessage()->getMessage() + ";";
+		clsClientMsgQueues[newfd].push(newMessage);
+	} while (clsBoard.moveToNextMessage());
+	clsBoard.resetCurrMessage();
+
+	if (!clsClientMsgQueues[newfd].empty()) {
+		SDL_Log("client %d's message queue is not empty\n", newfd);
+	} else {
+		SDL_Log("client %d's message queue is empty\n", newfd);
+	}
 
 	return newfd;
 }
@@ -136,6 +155,7 @@ int Server::deleteConnection(int clientfd) {
 	FD_CLR(clientfd, clsClientWfds);
 	FD_CLR(clientfd, clsClientEfds);
 	close(clientfd);
+	clsClientMsgQueues.erase(clientfd);
 
 	return 0;
 }
@@ -182,93 +202,44 @@ int Server::handleClientData(int clientfd) {
 	BoardMessage *newBM = new BoardMessage(senderMessage, sender);
 	clsBoard.addMessage(newBM);
 
-	for (auto& pair : clsClientMessages) {
+	std::string formatted_message = fullmessage + ";";
+	for (auto& pair : clsClientMsgQueues) {
 		if (pair.first == clientfd) continue;
-		
-		pair.second.push(fullmessage);
+
+		pair.second.push(formatted_message);
 	}	
 	return 0;
 }
 
-int Server::sendClientMessage(int clientfd, std::string message) {
+int Server::sendClientMessage(int clientfd) {
 
+	if (clsClientMsgQueues[clientfd].empty()) { return 0; }
 	char buffer[MAXMSGSIZE];
 	int bytes_stored;
 	int bytes_sent;
-	std::string fullmessage = "";
 
-	if (message.length() == 0) {
-		if (clsBoard.getMessageCount() == 0) { return 0; }
-		SDL_Log("Sent client %d entire board messages\n", clientfd);
-		std::string c = "b,";
-		fullmessage.append(c);
-
-		do {
-			BoardMessage* curr = clsBoard.getCurrMessage();
-			if (bytes_stored = snprintf(buffer, MAXMSGSIZE-1, "%s,%s;", curr->getSenderName().c_str(), curr->getMessage().c_str()); bytes_stored == -1) {
-				SDL_Log("Server::sendClientMessage Error during formatting\n");
-				exit(1); // DEBUG
-				return -1;
-			}
-
-			if (bytes_stored > MAXMSGSIZE-1) {
-				SDL_Log("Message server is trying to send is too large\n");
-				return -1;
-			}
-
-			buffer[bytes_stored] = '\0';
-
-			fullmessage.append(buffer);
-
-		} while (clsBoard.moveToNextMessage());
-
-		SDL_Log("Full message: %s\n", fullmessage.c_str());
-
-		int packet_bytes = 0;
-		int message_bytes = fullmessage.length();
-		bytes_sent = 0;
-		std::string curr_message;
-			
-		do {
-			curr_message = fullmessage.substr(bytes_sent, message_bytes-bytes_sent);
-			SDL_Log("In while loop\n");
-			if (packet_bytes = send(clientfd, curr_message.c_str(), curr_message.length(), 0); packet_bytes == -1) {
-				SDL_Log("Server::sendClientMessage send() failed for full board message to client %d, errno: %d\n", clientfd, errno);
-				exit(1); // DEBUG
-				return -1;
-			}
-
-			SDL_Log("Bytes sent: %d\n", packet_bytes);
-
-			bytes_sent += packet_bytes;
-		} while (bytes_sent < message_bytes);
-
-		return 0;
-	}
-
-	SDL_Log("Sent client %d a message\n", clientfd); // DEBUG
-
-	if (bytes_stored = snprintf(buffer, MAXMSGSIZE-1, "%c,%s,%s", 'm', "Name", message.c_str()); bytes_stored == -1) {
-		SDL_Log("Server::sendClientMessage Error during formatting\n");
-		exit(1); // DEBUG
-		return -1;
-	}
-	if (bytes_stored > MAXMSGSIZE-1) {
-		SDL_Log("Message server is trying to send is too large\n");
-		return -1;
-	}
-
-	buffer[bytes_stored] = '\0';
-
-	if (bytes_sent = send(clientfd, buffer, MAXMSGSIZE, 0); bytes_sent == -1) {
+	std::string queueMsg;
+	queueMsg = "m,";
+	if (bytes_sent = send(clientfd, queueMsg.c_str(), queueMsg.length(), 0); bytes_sent == -1) {
 		SDL_Log("Server::sendClientMessage send() failed for client %d. errno: %d\n", clientfd, errno);
+		exit(1); //DEBUG
 		return -1;
 	}
+	while (!clsClientMsgQueues[clientfd].empty()) {
+		queueMsg = clsClientMsgQueues[clientfd].front();
 
-	SDL_Log("Message sent: %s\n", buffer);
-	SDL_Log("Sent %d bytes\n", bytes_sent);
+		if (bytes_sent = send(clientfd, queueMsg.c_str(), queueMsg.length(), 0); bytes_sent == -1) {
+			SDL_Log("Server::sendClientMessage send() failed for client %d. errno: %d\n", clientfd,errno);
+			exit(1); // DEBUG
+			return -1;
+		}
 
-	return 0;
+		clsClientMsgQueues[clientfd].pop();
+		SDL_Log("Message sent: %s\n", queueMsg.c_str());
+		SDL_Log("Bytes sent: %d\n", bytes_sent);
+	}
+
+	return 1;
 }
 
 int Server::handleClientError(int clientfd) {
@@ -286,6 +257,17 @@ int Server::handleClientError(int clientfd) {
 	}
 
 	return 0;
+}
+
+int Server::addMessageToQueues(std::string sender, std::string message) {
+
+	std::string newMessage;
+	for (auto& pair : clsClientMsgQueues) {
+		newMessage = sender + "," + message + ";";
+		pair.second.push(newMessage);
+	}
+
+	return 1;
 }
 
 int Server::pollConnections() {
@@ -309,7 +291,7 @@ int Server::pollConnections() {
 			if (i == clsListenfd) { // new client is trying to connect
 				SDL_Log("New connection\n");
 				int newfd = handleNewConnection();
-				sendClientMessage(newfd, ""); // sends new client current board messages
+				sendClientMessage(newfd); // sends new client current board messages
 			}
 			else {
 				handleClientData(i);
@@ -317,13 +299,12 @@ int Server::pollConnections() {
 			return MESSAGE_RECVD;
 		}
 
-		// if (FD_ISSET(i, clsClientWfds)) {
-		// 	SDL_Log("Socket %d ready to recieve message\n", i);
-		// 	std::string m = "hello";
-		// 	sendClientMessage(i, m);
-		// 	SDL_Log("\n");
-		// 	return MESSAGE_SEND;
-		// }
+		if (FD_ISSET(i, clsClientWfds)) {
+			if (sendClientMessage(i) == 1) {
+				SDL_Log("Message sent\n");
+			}
+			return MESSAGE_SEND;
+		}
 
 		// if (FD_ISSET(i, clsClientEfds)) {
 		// 	handleClientError(i);

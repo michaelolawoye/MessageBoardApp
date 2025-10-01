@@ -99,6 +99,8 @@ bool Board::listTexturesAndSurfaces() {
 int Board::getMessageCount() { return cMessageCount; }
 BoardMessage* Board::getCurrMessage() { return currMessage; }
 
+void Board::resetCurrMessage() { currMessage = cMessages; }
+
 bool Board::addMessage(BoardMessage* message) {
 
 	if (!message) {

@@ -61,6 +61,7 @@ class Board {
 		bool renderTextures(SDL_FRect);
 
 		BoardMessage* getCurrMessage();
+		void resetCurrMessage();
 
 		bool destroyMessages();
 
