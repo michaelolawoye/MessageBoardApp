@@ -18,6 +18,8 @@ class Server{
 
 		Board& clsBoard;
 
+		std::unordered_map<int, std::queue<std::string>> clsClientMessages; // keeps track of each clients queue of unrecieved messages
+
 		void* get_inaddr(struct sockaddr*);
 		int createListenSocket();
 		int handleNewConnection();

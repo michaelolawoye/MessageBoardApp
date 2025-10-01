@@ -9,6 +9,8 @@
 #include <vector>
 #include <signal.h>
 #include <csignal>
+#include <unordered_map>
+#include <queue>
 
 #ifdef _WIN32
 	#include <windows.h>

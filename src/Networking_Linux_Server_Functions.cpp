@@ -123,6 +123,9 @@ int Server::handleNewConnection() {
 		clsMaxfd = newfd;
 	}
 
+	clsClientMessages[newfd].push("");
+	clsClientMessages[newfd].pop();
+
 	return newfd;
 }
 
@@ -179,9 +182,11 @@ int Server::handleClientData(int clientfd) {
 	BoardMessage *newBM = new BoardMessage(senderMessage, sender);
 	clsBoard.addMessage(newBM);
 
-	SDL_Log("Name: %s\nMessage: %s\n", sender, senderMessage);
-
-	
+	for (auto& pair : clsClientMessages) {
+		if (pair.first == clientfd) continue;
+		
+		pair.second.push(fullmessage);
+	}	
 	return 0;
 }
 
@@ -298,14 +303,13 @@ int Server::pollConnections() {
 	FD_CLR(clsListenfd, clsClientEfds);
 
 	int socks = select(clsMaxfd+1, clsClientRfds, nullptr, nullptr, &tv);
-	
 	for (int i = 0; i < clsMaxfd+1; i++) {
 		if (FD_ISSET(i, clsClientRfds)) {
 			SDL_Log("Socket %d sent a message\n", i);
-			if (i == clsListenfd) { // new client trying to connect
+			if (i == clsListenfd) { // new client is trying to connect
 				SDL_Log("New connection\n");
 				int newfd = handleNewConnection();
-				sendClientMessage(newfd, "");
+				sendClientMessage(newfd, ""); // sends new client current board messages
 			}
 			else {
 				handleClientData(i);
