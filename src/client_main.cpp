@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	std::string titleFontPath{"../assets/Roboto/static/Roboto-Black.ttf"};
+	std::string titleFontPath{"./assets/Roboto/static/Roboto-Black.ttf"};
 	TTF_Font* font{nullptr};
 	if (font = TTF_OpenFont(titleFontPath.c_str(), titleFontPath.length()); font == nullptr) {
 		SDL_Log("Couldn't load font. SDL_Error: %s\n", SDL_GetError());

@@ -47,4 +47,6 @@ libx11-6 libxext6 libxrandr2 libxcursor1 libxinerama1 libxfixes3
 
 RUN ldconfig
 
-CMD ["/MessageBoardApp/build/client_main.exe"]
+WORKDIR /MessageBoardApp
+
+CMD ["build/client_main.exe"]
