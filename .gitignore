@@ -2,5 +2,7 @@
 server_network
 client_network
 client_main
+server_main
+main_out
 testclient.cpp
 testclient

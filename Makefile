@@ -3,7 +3,7 @@ SERVER_SOURCE_FILE = src/server_main.cpp
 CLIENT_SOURCE_FILE = src/client_main.cpp
 COMPILER_FLAGS = 
 LINKER_FLAGS = -lSDL3 -lSDL3_image -lSDL3_ttf
-SERVER_OUTPUT = build/main_out.exe
+SERVER_OUTPUT = build/server_main.exe
 CLIENT_OUTPUT = build/client_main.exe
 
 
