@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 	Board b = {mRenderer, font};
 	Board& mBoard = b;
 
-	Client mClient{"Ubuntu-24", MY_PORT, mBoard};
+	Client mClient{"10.0.2.15", MY_PORT, mBoard};
 
 
 	SDL_Log("socket: %d\n", mClient.getSocket());
